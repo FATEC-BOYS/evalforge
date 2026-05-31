@@ -50,19 +50,7 @@ async def get_current_user(
         public_id=user.public_id,
         email=user.email,
         is_active=user.is_active,
-        is_admin=user.is_admin,
     )
-
-
-async def get_admin_user(
-    current_user: AuthenticatedUser = Depends(get_current_user),
-) -> AuthenticatedUser:
-    if not current_user.is_admin:
-        raise ValidationException(
-            message="Admin access required",
-            context={"public_id": current_user.public_id},
-        )
-    return current_user
 
 
 async def get_redis() -> AsyncGenerator[Redis, None]:
