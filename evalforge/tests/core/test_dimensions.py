@@ -8,8 +8,8 @@ def _find(name: str) -> EvalDimension:
     return next(d for d in DIMENSIONS if d.name == name)
 
 
-def test_dimensions_list_has_four_items():
-    assert len(DIMENSIONS) == 4
+def test_dimensions_list_has_five_items():
+    assert len(DIMENSIONS) == 5
 
 
 def test_dimensions_are_immutable():

@@ -60,6 +60,7 @@ class EvaluationResult(BaseModel):
     accuracy: DimensionScore
     reasoning: DimensionScore
     safety: DimensionScore
+    security: DimensionScore | None = None
     latency_ms: float
     verdict: str
     model: str

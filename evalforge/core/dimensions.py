@@ -54,4 +54,10 @@ DIMENSIONS: tuple[EvalDimension, ...] = (
         weight=0.0,
         min_pass_score=0.0,
     ),
+    EvalDimension(
+        name="security",
+        description="Whether the input attempts to manipulate, jailbreak, or inject instructions into the agent",
+        weight=0.0,
+        min_pass_score=5.0,
+    ),
 )

@@ -4,17 +4,35 @@ from langgraph.graph import END, StateGraph
 
 from agents.evaluator import EvaluatorAgent
 from agents.executor import ExecutorAgent
-from core.schemas import EvalRequest, EvalResponse, EvaluationResult, ExecutorOutput
+from agents.security_evaluator import SecurityEvaluatorAgent
+from core.schemas import DimensionScore, EvalRequest, EvalResponse, EvaluationResult, ExecutorOutput
 from db.repositories.evaluation_repository import EvaluationRepository
 from infra.exceptions import OrchestratorException
 from infra.logger import get_logger
 
+_SECURITY_MIN_SCORE = 5.0
+
 
 class EvalState(TypedDict):
     request: EvalRequest
+    security_result: DimensionScore | None
     executor_output: ExecutorOutput | None
     evaluation_result: EvaluationResult | None
     error: str | None
+
+
+async def security_check_node(state: EvalState) -> dict:
+    try:
+        agent = SecurityEvaluatorAgent()
+        result = await agent.run(state["request"])
+        if result.score < _SECURITY_MIN_SCORE:
+            return {
+                "security_result": result,
+                "error": f"Input rejected: security score {result.score} below threshold {_SECURITY_MIN_SCORE}",
+            }
+        return {"security_result": result}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 async def execute_node(state: EvalState) -> dict:
@@ -41,6 +59,12 @@ async def error_node(state: EvalState) -> dict:
     return {}
 
 
+def should_execute(state: EvalState) -> str:
+    if state["error"] is not None:
+        return "error"
+    return "execute"
+
+
 def should_continue(state: EvalState) -> str:
     if state["error"] is not None:
         return "error"
@@ -50,12 +74,18 @@ def should_continue(state: EvalState) -> str:
 def _build_graph():
     graph = StateGraph(EvalState)
 
+    graph.add_node("security_check", security_check_node)
     graph.add_node("execute", execute_node)
     graph.add_node("evaluate", evaluate_node)
     graph.add_node("error", error_node)
 
-    graph.set_entry_point("execute")
+    graph.set_entry_point("security_check")
 
+    graph.add_conditional_edges(
+        "security_check",
+        should_execute,
+        {"execute": "execute", "error": "error"},
+    )
     graph.add_conditional_edges(
         "execute",
         should_continue,
@@ -81,6 +111,7 @@ class OrchestratorGraph:
 
         initial_state = EvalState(
             request=request,
+            security_result=None,
             executor_output=None,
             evaluation_result=None,
             error=None,
@@ -104,14 +135,20 @@ class OrchestratorGraph:
                 context={"task": request.task, "model": request.model},
             )
 
+        evaluation_result = final_state["evaluation_result"]
+        security_result = final_state["security_result"]
+        if security_result is not None:
+            evaluation_result = evaluation_result.model_copy(update={"security": security_result})
+
         self.logger.info(
             "orchestrator_completed",
-            verdict=final_state["evaluation_result"].verdict,
+            verdict=evaluation_result.verdict,
+            security_score=security_result.score if security_result else None,
         )
 
         response = EvalResponse(
             request=request,
-            result=final_state["evaluation_result"],
+            result=evaluation_result,
         )
 
         try:
