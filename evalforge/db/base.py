@@ -1,8 +1,8 @@
+import uuid as _uuid
 from datetime import datetime
 
-from sqlalchemy import BINARY, String, func
+from sqlalchemy import BINARY, String, event, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-import uuid as _uuid
 
 
 class BaseEntity(DeclarativeBase):
@@ -19,13 +19,6 @@ class BaseEntity(DeclarativeBase):
         nullable=False,
         default=lambda: str(_uuid.uuid4()),
     )
-
-    def __init__(self, **kwargs):
-        if "id" not in kwargs:
-            kwargs["id"] = _uuid.uuid4().bytes
-        if "public_id" not in kwargs:
-            kwargs["public_id"] = str(_uuid.uuid4())
-        super().__init__(**kwargs)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         server_default=func.now(),
@@ -35,3 +28,11 @@ class BaseEntity(DeclarativeBase):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+@event.listens_for(BaseEntity, "init", propagate=True)
+def _set_pk_defaults(target, args, kwargs):
+    if "id" not in kwargs:
+        kwargs["id"] = _uuid.uuid4().bytes
+    if "public_id" not in kwargs:
+        kwargs["public_id"] = str(_uuid.uuid4())
