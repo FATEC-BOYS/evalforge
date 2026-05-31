@@ -2,7 +2,9 @@
 
 ## Repositório
 - GitHub: `fatec-boys/evalforge`
-- Branch de desenvolvimento: `main` (PR #26 mergeada)
+- Branch de desenvolvimento: `claude/intelligent-feynman-OCjzM`
+- Branch base: `main`
+- PR aberta: #31
 
 ## Sprint 1 — CONCLUÍDA ✓
 Issues fechadas: #1, #2, #3, #4
@@ -47,11 +49,11 @@ Issues fechadas: #9, #10
 - Testes: **60/60 passando** (Sprint 1 + 2 + 3)
 
 ### Arquitetura do pipeline
-```
+\`\`\`
 EvalRequest → execute_node (ExecutorAgent) → evaluate_node (EvaluatorAgent) → EvalResponse
                      ↓ erro                        ↓ erro
                  error_node → END             error_node → END
-```
+\`\`\`
 
 ## Sprint 4 — CONCLUÍDA ✓
 Issues fechadas: #11, #12
@@ -86,10 +88,43 @@ Issues: Docker + DB
 - Sessões reader/writer mockadas nos testes via `monkeypatch` + SQLite in-memory (aiosqlite)
 - `asyncpg` adicionado ao requirements (driver PostgreSQL assíncrono)
 
+## Sprint 8 — CONCLUÍDA ✓
+Issue fechada: #19
+
+### Entregáveis
+- `evalforge/providers/base.py` — `ProviderOutput` (Pydantic) + `BaseProvider` (ABC)
+- `evalforge/providers/anthropic_provider.py` — `AnthropicProvider`
+- `evalforge/providers/openai_provider.py` — `OpenAIProvider` (requer `OPENAI_API_KEY`)
+- `evalforge/providers/factory.py` — `ProviderFactory.get_provider(model)` por prefixo
+- `evalforge/agents/executor.py` — usa `ProviderFactory`; custo por provider
+- `evalforge/agents/evaluator.py` — usa `ProviderFactory`
+- `infra/config.py` — campo opcional `OPENAI_API_KEY`
+- `requirements.txt` — adiciona `openai`
+- Testes: **168/168 passando** (Sprint 1–4 + Sprint 8)
+
+### Regras de negócio estabelecidas
+- Roteamento por prefixo: `claude-` → Anthropic, `gpt-` / `o1-` / `o3-` → OpenAI
+- Custo Claude: $3/M input, $15/M output; GPT-4o: $2.50/M input, $10/M output; demais: $0
+- Adicionar novo provider nunca requer alterar `ExecutorAgent` ou `EvaluatorAgent`
+
+## Sprint 10 — TESTES CRIADOS (implementação pendente)
+Issues: #20, #21
+
+### Testes criados
+- `tests/rate_limit/` — `check_rate_limit` + `RateLimitException` (9 testes)
+- `tests/tasks/` — `EvaluationProcessor` Celery task (6 testes)
+- `tests/api/test_async_evaluate.py` — endpoint `POST /evaluate` assíncrono (7 testes)
+
+### O que a implementação deve criar
+- `api/rate_limit.py` — `check_rate_limit(user_public_id, redis)` + `RateLimitException`
+- `tasks/evaluation_processor.py` — `EvaluationProcessor` (Celery, idempotente via Redis)
+- `api/dependencies.py` — adicionar `get_current_user()`
+- `api/main.py` — `POST /evaluate` retorna `{evaluation_id, status: "processing"}`, `GET /evaluate/{id}`
+
 ## Setup local
-```powershell
+\`\`\`powershell
 cd evalforge\evalforge
 .venv\Scripts\Activate.ps1
 pip install -r ..\requirements.txt
 pytest tests/ -v
-```
+\`\`\`
