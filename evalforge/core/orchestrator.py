@@ -5,13 +5,7 @@ from langgraph.graph import END, StateGraph
 from agents.evaluator import EvaluatorAgent
 from agents.executor import ExecutorAgent
 from core.schemas import EvalRequest, EvalResponse, EvaluationResult, ExecutorOutput
-import importlib.util as _ilu
-import pathlib as _pathlib
-_repo_path = _pathlib.Path(__file__).parent.parent / "db" / "repositories" / "evaluation.repository.py"
-_spec = _ilu.spec_from_file_location("evaluation_repository", _repo_path)
-_eval_repo_module = _ilu.module_from_spec(_spec)
-_spec.loader.exec_module(_eval_repo_module)
-EvaluationRepository = _eval_repo_module.EvaluationRepository
+from db.repositories.evaluation_repository import EvaluationRepository
 from infra.exceptions import OrchestratorException
 from infra.logger import get_logger
 
