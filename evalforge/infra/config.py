@@ -1,0 +1,33 @@
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_VALID_ENVS = {"development", "staging", "production"}
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    ANTHROPIC_API_KEY: str
+    APP_ENV: str
+    LOG_LEVEL: str = "INFO"
+    LANGSMITH_API_KEY: str
+    LANGSMITH_PROJECT: str
+
+    @field_validator("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT")
+    @classmethod
+    def must_be_non_empty(cls, v: str, info) -> str:
+        if not v.strip():
+            raise ValueError(f"{info.field_name} must not be empty")
+        return v
+
+    @field_validator("APP_ENV")
+    @classmethod
+    def must_be_valid_env(cls, v: str) -> str:
+        if v not in _VALID_ENVS:
+            raise ValueError(
+                f"APP_ENV must be one of {sorted(_VALID_ENVS)}, got '{v}'"
+            )
+        return v
+
+
+settings = Settings()
