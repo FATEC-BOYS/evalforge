@@ -1,6 +1,5 @@
+import uuid
 from dataclasses import dataclass
-
-import uuid7
 
 from core.orchestrator import OrchestratorGraph
 
@@ -11,7 +10,7 @@ class RequestContext:
 
 
 def get_request_id() -> str:
-    return str(uuid7.uuid7())
+    return str(uuid.uuid4())
 
 
 def get_request_context() -> RequestContext:
