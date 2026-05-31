@@ -2,9 +2,7 @@
 
 ## Repositório
 - GitHub: `fatec-boys/evalforge`
-- Branch de desenvolvimento: `claude/intelligent-feynman-OCjzM`
-- Branch base: `main`
-- PR aberta: #26
+- Branch de desenvolvimento: `main` (PR #26 mergeada)
 
 ## Sprint 1 — CONCLUÍDA ✓
 Issues fechadas: #1, #2, #3, #4
@@ -55,17 +53,43 @@ EvalRequest → execute_node (ExecutorAgent) → evaluate_node (EvaluatorAgent) 
                  error_node → END             error_node → END
 ```
 
-## Sprint 4 — PRÓXIMA
-Issues: #11, #12
+## Sprint 4 — CONCLUÍDA ✓
+Issues fechadas: #11, #12
 
-| Issue | Arquivo | Descrição |
-|-------|---------|-----------|
-| #11 | `api/main.py` | FastAPI app com `POST /evaluate`, `GET /health`, lifespan e exception handlers |
-| #12 | `api/dependencies.py` | `get_orchestrator()`, `get_request_id()`, `RequestContext` |
+### Entregáveis
+- `evalforge/api/main.py` — FastAPI app com lifespan, CORS, handlers de exceção, `GET /health`, `POST /evaluate`
+- `evalforge/api/dependencies.py` — `RequestContext`, `get_request_id()`, `get_orchestrator()`
+- Testes: **74/74 passando** (Sprint 1 + 2 + 3 + 4)
+
+## Sprint 5 — CONCLUÍDA ✓
+Issue fechada: #15
+
+### Entregáveis
+- `README.md` — reescrito em inglês com diagrama Mermaid, tabela de dimensões, verdict logic, getting started, design decisions, roadmap
+
+## Sprint 6 — CONCLUÍDA ✓
+Issues: Docker + DB
+
+### Entregáveis
+- `Dockerfile` + `docker-compose.yml` + `.dockerignore` — ambiente de desenvolvimento com postgres, redis e api
+- `evalforge/db/base.py` — `BaseEntity` com `id` (BINARY/uuid4), `public_id`, `created_at`, `updated_at`; defaults gerados via SQLAlchemy `init` event
+- `evalforge/db/session.py` — `writer_engine`, `reader_engine`, `get_writer_session()`, `get_reader_session()` com `@asynccontextmanager`
+- `evalforge/db/entities/evaluation.py` — `EvaluationEntity` com todas as colunas da avaliação
+- `evalforge/db/repositories/evaluation_repository.py` — `save()`, `find_by_public_id()`, `list_by_model()`
+- `alembic.ini` + `alembic/env.py` — migrações async com autogenerate
+- `core/orchestrator.py` atualizado — persiste avaliação após pipeline; falha no save loga mas não quebra resposta
+- Testes: **97/97 passando** (Sprint 1 + 2 + 3 + 4 + 5 + 6)
+
+### Decisões técnicas
+- `uuid7` incompatível com Python 3.14 — substituído por `uuid.uuid4()` da stdlib
+- SQLAlchemy `default=lambda` só roda no INSERT; defaults em instanciação via `@event.listens_for(BaseEntity, "init")`
+- Sessões reader/writer mockadas nos testes via `monkeypatch` + SQLite in-memory (aiosqlite)
+- `asyncpg` adicionado ao requirements (driver PostgreSQL assíncrono)
 
 ## Setup local
 ```powershell
 cd evalforge\evalforge
 .venv\Scripts\Activate.ps1
+pip install -r ..\requirements.txt
 pytest tests/ -v
 ```
