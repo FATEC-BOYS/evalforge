@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -11,12 +12,14 @@ AsyncWriterSession = async_sessionmaker(writer_engine, expire_on_commit=False)
 AsyncReaderSession = async_sessionmaker(reader_engine, expire_on_commit=False)
 
 
+@asynccontextmanager
 async def get_writer_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncWriterSession() as session:
         async with session.begin():
             yield session
 
 
+@asynccontextmanager
 async def get_reader_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncReaderSession() as session:
         yield session

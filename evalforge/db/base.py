@@ -19,6 +19,13 @@ class BaseEntity(DeclarativeBase):
         nullable=False,
         default=lambda: str(_uuid.uuid4()),
     )
+
+    def __init__(self, **kwargs):
+        if "id" not in kwargs:
+            kwargs["id"] = _uuid.uuid4().bytes
+        if "public_id" not in kwargs:
+            kwargs["public_id"] = str(_uuid.uuid4())
+        super().__init__(**kwargs)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         server_default=func.now(),
