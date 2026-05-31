@@ -4,7 +4,8 @@ from pydantic import ValidationError
 from infra.config import Settings
 
 
-def test_raises_on_missing_api_key(valid_settings_kwargs):
+def test_raises_on_missing_api_key(monkeypatch, valid_settings_kwargs):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     kwargs = {k: v for k, v in valid_settings_kwargs.items() if k != "ANTHROPIC_API_KEY"}
     with pytest.raises(ValidationError):
         Settings(**kwargs)
@@ -25,7 +26,8 @@ def test_rejects_invalid_app_env_value(valid_settings_kwargs):
     assert "development" in error_text or "staging" in error_text or "production" in error_text
 
 
-def test_default_log_level_is_info(valid_settings_kwargs):
+def test_default_log_level_is_info(monkeypatch, valid_settings_kwargs):
+    monkeypatch.delenv("LOG_LEVEL", raising=False)
     kwargs = {k: v for k, v in valid_settings_kwargs.items() if k != "LOG_LEVEL"}
     settings = Settings(**kwargs)
     assert settings.LOG_LEVEL == "INFO"

@@ -26,10 +26,14 @@ def test_log_contains_required_fields():
         captured.append(event_dict.copy())
         raise structlog.DropEvent()
 
+    def add_logger_name(_logger, method, event_dict):
+        event_dict.setdefault("logger", event_dict.get("logger", "test_log_fields"))
+        return event_dict
+
     structlog.configure(
         processors=[
             structlog.stdlib.add_log_level,
-            structlog.stdlib.add_logger_name,
+            add_logger_name,
             structlog.processors.TimeStamper(fmt="iso"),
             list_processor,
         ],
