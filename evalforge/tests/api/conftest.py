@@ -46,7 +46,7 @@ async def app_client(mock_orchestrator):
     )
 
     async with httpx.AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test"
     ) as client:
         yield client
 
