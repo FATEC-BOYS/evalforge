@@ -8,7 +8,7 @@ from api.dependencies import RequestContext, get_orchestrator, get_request_conte
 from core.orchestrator import OrchestratorGraph
 from core.schemas import EvalRequest, EvalResponse
 from infra.config import settings
-from infra.exceptions import EvalException
+from infra.exceptions import EvalException, SecurityViolationException
 from infra.logger import configure_logging, get_logger
 
 
@@ -36,6 +36,14 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+
+@app.exception_handler(SecurityViolationException)
+async def security_violation_handler(request: Request, exc: SecurityViolationException) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={"error": "security_violation", "context": exc.context},
+    )
 
 
 @app.exception_handler(EvalException)

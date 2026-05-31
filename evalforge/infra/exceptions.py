@@ -34,3 +34,11 @@ class EvalIntegrationException(EvalException):
     def __init__(self, message: str, context: dict, integration: str) -> None:
         self.integration = integration
         super().__init__(message=message, context=context)
+
+
+class SecurityViolationException(EvalException):
+    """Raised when an input is rejected because its security score is below threshold."""
+
+    def __init__(self, message: str, context: dict, score: float) -> None:
+        self.score = score
+        super().__init__(message=message, context=context)

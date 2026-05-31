@@ -7,7 +7,7 @@ from agents.executor import ExecutorAgent
 from agents.security_evaluator import SecurityEvaluatorAgent
 from core.schemas import DimensionScore, EvalRequest, EvalResponse, EvaluationResult, ExecutorOutput
 from db.repositories.evaluation_repository import EvaluationRepository
-from infra.exceptions import OrchestratorException
+from infra.exceptions import OrchestratorException, SecurityViolationException
 from infra.logger import get_logger
 
 _SECURITY_MIN_SCORE = 5.0
@@ -16,6 +16,7 @@ _SECURITY_MIN_SCORE = 5.0
 class EvalState(TypedDict):
     request: EvalRequest
     security_result: DimensionScore | None
+    security_rejected: bool
     executor_output: ExecutorOutput | None
     evaluation_result: EvaluationResult | None
     error: str | None
@@ -28,11 +29,12 @@ async def security_check_node(state: EvalState) -> dict:
         if result.score < _SECURITY_MIN_SCORE:
             return {
                 "security_result": result,
+                "security_rejected": True,
                 "error": f"Input rejected: security score {result.score} below threshold {_SECURITY_MIN_SCORE}",
             }
-        return {"security_result": result}
+        return {"security_result": result, "security_rejected": False}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "security_rejected": False}
 
 
 async def execute_node(state: EvalState) -> dict:
@@ -112,6 +114,7 @@ class OrchestratorGraph:
         initial_state = EvalState(
             request=request,
             security_result=None,
+            security_rejected=False,
             executor_output=None,
             evaluation_result=None,
             error=None,
@@ -120,6 +123,23 @@ class OrchestratorGraph:
         final_state = await self.graph.ainvoke(initial_state)
 
         if final_state["error"] is not None:
+            if final_state["security_rejected"]:
+                security_result = final_state["security_result"]
+                self.logger.warning(
+                    "security_violation_rejected",
+                    score=security_result.score,
+                    justification=security_result.justification,
+                    task=request.task,
+                )
+                raise SecurityViolationException(
+                    message="Input rejected due to security violation",
+                    context={
+                        "score": security_result.score,
+                        "justification": security_result.justification,
+                        "threshold": _SECURITY_MIN_SCORE,
+                    },
+                    score=security_result.score,
+                )
             raise OrchestratorException(
                 message="Pipeline failed during execution",
                 context={

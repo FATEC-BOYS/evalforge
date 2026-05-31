@@ -4,7 +4,7 @@ import pytest
 
 from core.orchestrator import OrchestratorGraph
 from core.schemas import DimensionScore, EvalResponse
-from infra.exceptions import AgentException, OrchestratorException
+from infra.exceptions import AgentException, OrchestratorException, SecurityViolationException
 
 _EXECUTOR_PATH = "core.orchestrator.ExecutorAgent"
 _EVALUATOR_PATH = "core.orchestrator.EvaluatorAgent"
@@ -49,11 +49,11 @@ async def test_security_rejection_skips_executor(
         MockExec.return_value.run = executor_mock
         MockEval.return_value.run = AsyncMock(return_value=mock_evaluation_result)
 
-        with pytest.raises(OrchestratorException) as exc_info:
+        with pytest.raises(SecurityViolationException) as exc_info:
             await OrchestratorGraph().run(sample_eval_request)
 
     executor_mock.assert_not_called()
-    assert "Pipeline failed" in exc_info.value.message
+    assert exc_info.value.score == 2.0
 
 
 @pytest.mark.asyncio
