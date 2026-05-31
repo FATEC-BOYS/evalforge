@@ -4,7 +4,7 @@ langgraph
 langsmith
 fastapi
 uvicorn[standard]
-pydantic
+pydantic[email]
 pydantic-settings
 structlog
 python-dotenv
