@@ -8,7 +8,7 @@ from db.entities.evaluation import EvaluationEntity
 from db.repositories.evaluation_repository import EvaluationRepository
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def repo(writer_session, monkeypatch):
     """Patch both session factories to use the same in-memory session."""
 

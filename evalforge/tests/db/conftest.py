@@ -6,7 +6,7 @@ from core.schemas import DimensionScore, EvalRequest, EvalResponse, EvaluationRe
 from db.base import BaseEntity
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def engine():
     eng = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
     async with eng.begin() as conn:
@@ -17,7 +17,7 @@ async def engine():
     await eng.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def writer_session(engine):
     session = AsyncSession(engine, expire_on_commit=False)
     yield session
@@ -25,7 +25,7 @@ async def writer_session(engine):
     await session.close()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def reader_session(engine):
     session = AsyncSession(engine, expire_on_commit=False)
     yield session
