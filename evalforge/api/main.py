@@ -4,7 +4,14 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from api.dependencies import RequestContext, get_orchestrator, get_request_context
+from api.dependencies import (
+    AuthenticatedUser,
+    RequestContext,
+    get_current_user,
+    get_orchestrator,
+    get_request_context,
+)
+from auth.router import router as auth_router
 from core.orchestrator import OrchestratorGraph
 from core.schemas import EvalRequest, EvalResponse
 from infra.config import settings
@@ -34,8 +41,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+app.include_router(auth_router)
 
 
 @app.exception_handler(EvalException)
@@ -66,11 +75,13 @@ async def evaluate(
     request: EvalRequest,
     context: RequestContext = Depends(get_request_context),
     orchestrator: OrchestratorGraph = Depends(get_orchestrator),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> EvalResponse:
     logger = get_logger(__name__)
     logger.info(
         "evaluate_request_received",
         request_id=context.request_id,
+        user=current_user.public_id,
         task=request.task,
         model=request.model,
     )

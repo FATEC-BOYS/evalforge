@@ -4,8 +4,9 @@ import pytest_asyncio
 from httpx import ASGITransport
 from unittest.mock import AsyncMock, MagicMock
 
-from api.dependencies import RequestContext, get_orchestrator, get_request_context
+from api.dependencies import RequestContext, get_current_user, get_orchestrator, get_request_context
 from api.main import app
+from auth.schemas import AuthenticatedUser
 from core.orchestrator import OrchestratorGraph
 from core.schemas import DimensionScore, EvalRequest, EvalResponse, EvaluationResult
 
@@ -43,6 +44,11 @@ async def app_client(mock_orchestrator):
     app.dependency_overrides[get_orchestrator] = lambda: mock_orchestrator
     app.dependency_overrides[get_request_context] = lambda: RequestContext(
         request_id="test-request-id-123"
+    )
+    app.dependency_overrides[get_current_user] = lambda: AuthenticatedUser(
+        public_id="test-user-public-id",
+        email="test@example.com",
+        is_active=True,
     )
 
     async with httpx.AsyncClient(

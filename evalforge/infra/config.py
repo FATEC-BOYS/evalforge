@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     DATABASE_READER_URL: str
     REDIS_URL: str
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_MINUTES: int = 60
 
     @field_validator(
         "ANTHROPIC_API_KEY",
@@ -23,6 +26,7 @@ class Settings(BaseSettings):
         "DATABASE_URL",
         "DATABASE_READER_URL",
         "REDIS_URL",
+        "JWT_SECRET_KEY",
     )
     @classmethod
     def must_be_non_empty(cls, v: str, info) -> str:

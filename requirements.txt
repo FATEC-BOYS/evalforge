@@ -14,5 +14,7 @@ pytest
 pytest-asyncio
 uuid7
 sqlalchemy[asyncio]
+python-jose[cryptography]
+passlib[bcrypt]
 asyncpg
 aiosqlite
