@@ -14,4 +14,5 @@ pytest
 pytest-asyncio
 uuid7
 sqlalchemy[asyncio]
+asyncpg
 aiosqlite
