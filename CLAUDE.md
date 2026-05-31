@@ -40,13 +40,28 @@ Issues fechadas: #5, #6, #7, #8
 - Custo: $3/M tokens input, $15/M tokens output (Anthropic Sonnet)
 - Prompts são arquivos `.md` versionados, nunca hardcoded em Python
 
-## Sprint 3 — PRÓXIMA
-Issues: #9, #10
+## Sprint 3 — CONCLUÍDA ✓
+Issues fechadas: #9, #10
+
+### Entregáveis
+- `evalforge/core/dimensions.py` — `EvalDimension` + `DIMENSIONS` (4 dimensões: accuracy, reasoning, safety, latency)
+- `evalforge/core/orchestrator.py` — `OrchestratorGraph` com LangGraph: execute → evaluate → END
+- Testes: **60/60 passando** (Sprint 1 + 2 + 3)
+
+### Arquitetura do pipeline
+```
+EvalRequest → execute_node (ExecutorAgent) → evaluate_node (EvaluatorAgent) → EvalResponse
+                     ↓ erro                        ↓ erro
+                 error_node → END             error_node → END
+```
+
+## Sprint 4 — PRÓXIMA
+Issues: #11, #12
 
 | Issue | Arquivo | Descrição |
 |-------|---------|-----------|
-| #9 | `core/orchestrator.py` | `OrchestratorGraph` com LangGraph: execute → evaluate → END |
-| #10 | `core/dimensions.py` | `EvalDimension` + `DIMENSIONS` com 4 dimensões padrão |
+| #11 | `api/main.py` | FastAPI app com `POST /evaluate`, `GET /health`, lifespan e exception handlers |
+| #12 | `api/dependencies.py` | `get_orchestrator()`, `get_request_id()`, `RequestContext` |
 
 ## Setup local
 ```powershell
