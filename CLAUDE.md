@@ -107,19 +107,25 @@ Issue fechada: #19
 - Custo Claude: $3/M input, $15/M output; GPT-4o: $2.50/M input, $10/M output; demais: $0
 - Adicionar novo provider nunca requer alterar `ExecutorAgent` ou `EvaluatorAgent`
 
-## Sprint 10 — TESTES CRIADOS (implementação pendente)
-Issues: #20, #21
+## Sprint 10 — CONCLUÍDA ✓
+Issues fechadas: #20, #21
 
-### Testes criados
-- `tests/rate_limit/` — `check_rate_limit` + `RateLimitException` (9 testes)
-- `tests/tasks/` — `EvaluationProcessor` Celery task (6 testes)
-- `tests/api/test_async_evaluate.py` — endpoint `POST /evaluate` assíncrono (7 testes)
+### Entregáveis
+- `evalforge/infra/exceptions.py` — `RateLimitException(EvalException)` com campo `retry_after: int`
+- `evalforge/infra/redis_client.py` — `get_redis_client()` retorna `Redis` assíncrono com lazy connect
+- `evalforge/api/rate_limit.py` — `check_rate_limit(user_public_id, redis)` com fallback gracioso se Redis indisponível
+- `evalforge/tasks/__init__.py` + `evalforge/tasks/evaluation_processor.py` — `EvaluationProcessor` (Celery, idempotente via `SET NX`)
+- `evalforge/api/dependencies.py` — `get_redis()`, `get_current_user()`, `get_evaluation_repository()`
+- `evalforge/api/main.py` — handler 429 com `Retry-After`, `POST /evaluate` assíncrono (Celery `.delay()`), `GET /evaluate/{id}`
+- `requirements.txt` — adiciona `celery`, `redis[asyncio]`, `pydantic[email]`, `python-jose[cryptography]`, `passlib[bcrypt]`, `asyncpg`
+- Testes: **22/22 Sprint 10 passando** (~190 total)
 
-### O que a implementação deve criar
-- `api/rate_limit.py` — `check_rate_limit(user_public_id, redis)` + `RateLimitException`
-- `tasks/evaluation_processor.py` — `EvaluationProcessor` (Celery, idempotente via Redis)
-- `api/dependencies.py` — adicionar `get_current_user()`
-- `api/main.py` — `POST /evaluate` retorna `{evaluation_id, status: "processing"}`, `GET /evaluate/{id}`
+### Regras de negócio estabelecidas
+- Rate limit: 10 req/hora por usuário; janela fixa com INCR+EXPIRE (EXPIRE só no count==1)
+- Idempotência: `SET NX task_result:{task_id}` com TTL 86400s; retorna `already_processed` se já executado
+- Redis indisponível não bloqueia avaliação — rate limit e idempotência são degradados graciosamente
+- `POST /evaluate` retorna `{evaluation_id, status: "processing"}` imediatamente; resultado via `GET /evaluate/{id}`
+- `EvaluationProcessor` recebe `task_id` explícito (o `evaluation_id` da API) para rastreabilidade
 
 ## Setup local
 \`\`\`powershell
