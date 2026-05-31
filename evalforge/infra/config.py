@@ -12,8 +12,18 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LANGSMITH_API_KEY: str
     LANGSMITH_PROJECT: str
+    DATABASE_URL: str
+    DATABASE_READER_URL: str
+    REDIS_URL: str
 
-    @field_validator("ANTHROPIC_API_KEY", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT")
+    @field_validator(
+        "ANTHROPIC_API_KEY",
+        "LANGSMITH_API_KEY",
+        "LANGSMITH_PROJECT",
+        "DATABASE_URL",
+        "DATABASE_READER_URL",
+        "REDIS_URL",
+    )
     @classmethod
     def must_be_non_empty(cls, v: str, info) -> str:
         if not v.strip():
