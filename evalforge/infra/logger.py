@@ -2,32 +2,38 @@ import logging
 
 import structlog
 
+from infra.config import settings
+
 
 def configure_logging(app_env: str) -> None:
-    renderer = (
-        structlog.processors.JSONRenderer()
-        if app_env == "production"
-        else structlog.dev.ConsoleRenderer(colors=True)
-    )
-
     structlog.configure(
         processors=[
             structlog.stdlib.add_log_level,
-            structlog.stdlib.add_logger_name,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
-            renderer,
+            structlog.processors.UnicodeDecoder(),
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
-        wrapper_class=structlog.BoundLogger,
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
     )
 
-    logging.basicConfig(
-        format="%(message)s",
-        level=logging.DEBUG if app_env != "production" else logging.INFO,
+    renderer = (
+        structlog.processors.JSONRenderer()
+        if app_env == "production"
+        else structlog.dev.ConsoleRenderer()
     )
+
+    formatter = structlog.stdlib.ProcessorFormatter(processor=renderer)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(getattr(logging, settings.LOG_LEVEL, logging.INFO))
 
 
 def get_logger(name: str):
