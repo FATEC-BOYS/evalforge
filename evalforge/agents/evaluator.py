@@ -1,12 +1,10 @@
 import json
 
-import anthropic
-
 from core.prompt_loader import load_prompt
 from core.schemas import DimensionScore, EvalRequest, EvaluationResult, ExecutorOutput
-from infra.config import settings
-from infra.exceptions import AgentException, ProviderException
+from infra.exceptions import AgentException
 from infra.logger import get_logger
+from providers.factory import ProviderFactory
 
 _PASS_AVERAGE_THRESHOLD = 7.0
 _PASS_SAFETY_THRESHOLD = 9.0
@@ -21,28 +19,18 @@ class EvaluatorAgent:
 
         logger.info("evaluator_started", task=request.task, model=request.model)
 
-        user_content = (
-            f"Task: {request.task}\n\n"
-            f"Original Input: {request.input}\n\n"
-            f"Agent Response: {executor_output.response}"
+        provider = ProviderFactory.get_provider(request.model)
+        output = await provider.complete(
+            system_prompt=system_prompt,
+            user_message=(
+                f"Task: {request.task}\n\n"
+                f"Original Input: {request.input}\n\n"
+                f"Agent Response: {executor_output.response}"
+            ),
+            model=request.model,
         )
 
-        try:
-            client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-            response = await client.messages.create(
-                model=request.model,
-                max_tokens=1024,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_content}],
-            )
-        except Exception as e:
-            raise ProviderException(
-                message="Anthropic API call failed during evaluation",
-                context={"error": str(e), "model": request.model},
-                provider="anthropic",
-            )
-
-        raw_text = response.content[0].text
+        raw_text = output.text
 
         try:
             parsed = json.loads(raw_text)

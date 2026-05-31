@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     ANTHROPIC_API_KEY: str
+    OPENAI_API_KEY: str | None = None
     APP_ENV: str
     LOG_LEVEL: str = "INFO"
     LANGSMITH_API_KEY: str
