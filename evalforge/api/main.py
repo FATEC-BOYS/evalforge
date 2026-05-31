@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from api.dependencies import RequestContext, get_orchestrator, get_request_context
 from core.orchestrator import OrchestratorGraph
 from core.schemas import EvalRequest, EvalResponse
+from db.repositories.audit_log_repository import AuditLogRepository
 from infra.config import settings
 from infra.exceptions import EvalException, SecurityViolationException
 from infra.logger import configure_logging, get_logger
@@ -40,6 +41,20 @@ app.add_middleware(
 
 @app.exception_handler(SecurityViolationException)
 async def security_violation_handler(request: Request, exc: SecurityViolationException) -> JSONResponse:
+    logger = get_logger(__name__)
+    try:
+        audit_repo = AuditLogRepository()
+        await audit_repo.append(
+            user_public_id="unknown",
+            request_id="unknown",
+            action="evaluate",
+            result="rejected",
+            security_score=exc.score,
+            error_message=exc.message,
+        )
+    except Exception as e:
+        logger.error("audit_log_failed", error=str(e))
+
     return JSONResponse(
         status_code=400,
         content={"error": "security_violation", "context": exc.context},
@@ -90,5 +105,17 @@ async def evaluate(
         request_id=context.request_id,
         verdict=response.result.verdict,
     )
+
+    try:
+        audit_repo = AuditLogRepository()
+        await audit_repo.append(
+            user_public_id="anonymous",
+            request_id=context.request_id,
+            action="evaluate",
+            result="success",
+            model=request.model,
+        )
+    except Exception as e:
+        logger.error("audit_log_failed", error=str(e))
 
     return response
