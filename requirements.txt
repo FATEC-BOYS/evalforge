@@ -13,3 +13,4 @@ respx
 pytest
 pytest-asyncio
 uuid7
+aiosqlite
