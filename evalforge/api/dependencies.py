@@ -1,14 +1,18 @@
 import uuid
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from redis.asyncio import Redis
 
 from auth.schemas import AuthenticatedUser
 from auth.security import decode_access_token
 from core.orchestrator import OrchestratorGraph
+from db.repositories.evaluation_repository import EvaluationRepository
 from db.repositories.user_repository import UserRepository
 from infra.exceptions import ValidationException
+from infra.redis_client import get_redis_client
 
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -47,3 +51,13 @@ async def get_current_user(
         email=user.email,
         is_active=user.is_active,
     )
+
+
+async def get_redis() -> AsyncGenerator[Redis, None]:
+    client = get_redis_client()
+    yield client
+    await client.aclose()
+
+
+def get_evaluation_repository() -> EvaluationRepository:
+    return EvaluationRepository()

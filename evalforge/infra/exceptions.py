@@ -34,3 +34,11 @@ class EvalIntegrationException(EvalException):
     def __init__(self, message: str, context: dict, integration: str) -> None:
         self.integration = integration
         super().__init__(message=message, context=context)
+
+
+class RateLimitException(EvalException):
+    """Raised when a user exceeds their request quota."""
+
+    def __init__(self, message: str, context: dict, retry_after: int = 3600) -> None:
+        self.retry_after = retry_after
+        super().__init__(message=message, context=context)

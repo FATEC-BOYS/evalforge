@@ -1,5 +1,7 @@
 anthropic
 openai
+celery
+redis[asyncio]
 langchain
 langgraph
 langsmith
