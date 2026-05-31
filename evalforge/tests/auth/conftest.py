@@ -5,6 +5,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 from unittest.mock import AsyncMock, MagicMock
 
 from api.dependencies import get_current_user, get_orchestrator
@@ -77,7 +78,12 @@ def _mock_orchestrator():
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def engine():
-    eng = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+    eng = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        echo=False,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     async with eng.begin() as conn:
         await conn.run_sync(BaseEntity.metadata.create_all)
     yield eng
