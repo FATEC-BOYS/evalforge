@@ -1,7 +1,6 @@
 import logging
 
 import structlog
-from structlog.types import BoundLogger
 
 
 def configure_logging(app_env: str) -> None:
@@ -31,5 +30,5 @@ def configure_logging(app_env: str) -> None:
     )
 
 
-def get_logger(name: str) -> BoundLogger:
+def get_logger(name: str):
     return structlog.get_logger(name)
