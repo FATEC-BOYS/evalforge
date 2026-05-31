@@ -12,6 +12,5 @@ httpx
 respx
 pytest
 pytest-asyncio
-uuid7
 sqlalchemy[asyncio]
 aiosqlite

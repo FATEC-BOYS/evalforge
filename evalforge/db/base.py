@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import BINARY, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from uuid7 import uuid7
+import uuid as _uuid
 
 
 class BaseEntity(DeclarativeBase):
@@ -11,13 +11,13 @@ class BaseEntity(DeclarativeBase):
     id: Mapped[bytes] = mapped_column(
         BINARY(16),
         primary_key=True,
-        default=lambda: uuid7().bytes,
+        default=lambda: _uuid.uuid4().bytes,
     )
     public_id: Mapped[str] = mapped_column(
         String(36),
         unique=True,
         nullable=False,
-        default=lambda: str(uuid7()),
+        default=lambda: str(_uuid.uuid4()),
     )
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
