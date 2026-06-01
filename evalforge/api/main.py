@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from api.dependencies import (
     AuthenticatedUser,
     RequestContext,
+    get_admin_user,
     get_current_user,
     get_evaluation_repository,
     get_orchestrator,
@@ -19,6 +20,7 @@ from api.rate_limit import check_rate_limit
 from auth.router import router as auth_router
 from core.orchestrator import OrchestratorGraph
 from core.schemas import EvalRequest, EvalResponse
+from db.repositories.audit_log_repository import AuditLogRepository
 from db.repositories.evaluation_repository import EvaluationRepository
 from infra.config import settings
 from infra.exceptions import EvalException, RateLimitException
@@ -118,6 +120,17 @@ async def evaluate(
         user=current_user.public_id,
     )
 
+    try:
+        await AuditLogRepository().append(
+            user_public_id=current_user.public_id,
+            request_id=context.request_id,
+            action="evaluate",
+            result="processing",
+            model=request.model,
+        )
+    except Exception as e:
+        logger.error("audit_log_failed", error=str(e))
+
     return {"evaluation_id": evaluation_id, "status": "processing"}
 
 
@@ -140,3 +153,25 @@ async def get_evaluation(
         "model": entity.model,
         "created_at": entity.created_at.isoformat(),
     }
+
+
+@app.get("/audit")
+async def get_audit_log(
+    limit: int = 100,
+    _admin: AuthenticatedUser = Depends(get_admin_user),
+) -> list[dict]:
+    entries = await AuditLogRepository().list_recent(limit=limit)
+    return [
+        {
+            "public_id": e.public_id,
+            "user_public_id": e.user_public_id,
+            "request_id": e.request_id,
+            "action": e.action,
+            "result": e.result,
+            "model": e.model,
+            "security_score": e.security_score,
+            "error_message": e.error_message,
+            "created_at": e.created_at.isoformat(),
+        }
+        for e in entries
+    ]
