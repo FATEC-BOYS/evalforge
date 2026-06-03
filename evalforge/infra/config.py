@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str | None = None
     STRIPE_WEBHOOK_SECRET: str | None = None
     STRIPE_PRO_PRICE_ID: str | None = None
+    ALLOWED_ORIGINS: str = ""
 
     @field_validator("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_PRICE_ID")
     @classmethod
