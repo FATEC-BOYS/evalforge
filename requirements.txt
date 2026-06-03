@@ -21,3 +21,5 @@ passlib[bcrypt]
 asyncpg
 aiosqlite
 stripe
+scikit-learn
+numpy

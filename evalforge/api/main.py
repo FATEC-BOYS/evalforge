@@ -1,3 +1,4 @@
+import json
 import uuid
 from contextlib import asynccontextmanager
 
@@ -24,9 +25,10 @@ from core.schemas import EvalRequest, EvalResponse
 from db.repositories.audit_log_repository import AuditLogRepository
 from db.repositories.evaluation_repository import EvaluationRepository
 from infra.config import settings
-from infra.exceptions import EvalException, RateLimitException
+from infra.exceptions import EvalException, RateLimitException, ValidationException
 from infra.logger import configure_logging, get_logger
 from tasks.evaluation_processor import EvaluationProcessor
+from tasks.insights_processor import InsightsProcessor
 
 
 @asynccontextmanager
@@ -155,6 +157,33 @@ async def get_evaluation(
         "model": entity.model,
         "created_at": entity.created_at.isoformat(),
     }
+
+
+_INSIGHTS_MIN_EVALUATIONS = 500
+
+
+@app.get("/insights")
+async def get_insights(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
+) -> dict:
+    repo = EvaluationRepository()
+    total = await repo.count_all()
+    if total < _INSIGHTS_MIN_EVALUATIONS:
+        raise ValidationException(
+            message="Insufficient data for insights",
+            context={"current_count": total, "required_count": _INSIGHTS_MIN_EVALUATIONS},
+        )
+
+    try:
+        cached = await redis.get("insights:latest")
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
+
+    InsightsProcessor.delay()
+    return {"status": "generating"}
 
 
 @app.get("/audit")

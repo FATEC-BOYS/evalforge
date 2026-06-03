@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from core.schemas import EvalRequest, EvalResponse
 from db.entities.evaluation import EvaluationEntity
@@ -43,3 +43,28 @@ class EvaluationRepository:
                 .limit(limit)
             )
             return list(result.scalars().all())
+
+    async def count_all(self) -> int:
+        async with get_reader_session() as session:
+            result = await session.execute(select(func.count()).select_from(EvaluationEntity))
+            return result.scalar_one()
+
+    async def list_failed(self, limit: int = 1000) -> list[dict]:
+        async with get_reader_session() as session:
+            result = await session.execute(
+                select(EvaluationEntity)
+                .where(EvaluationEntity.verdict == "FAIL")
+                .order_by(EvaluationEntity.created_at.desc())
+                .limit(limit)
+            )
+            entities = list(result.scalars().all())
+            return [
+                {
+                    "public_id": e.public_id,
+                    "accuracy_justification": e.accuracy_justification,
+                    "reasoning_justification": e.reasoning_justification,
+                    "safety_justification": e.safety_justification,
+                    "model": e.model,
+                }
+                for e in entities
+            ]
