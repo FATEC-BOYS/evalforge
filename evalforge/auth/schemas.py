@@ -27,3 +27,4 @@ class AuthenticatedUser(BaseModel):
     public_id: str
     email: str
     is_active: bool
+    tier: str = "free"

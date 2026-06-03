@@ -8,7 +8,9 @@ RATE_LIMIT = 10
 WINDOW_SECONDS = 3600
 
 
-async def check_rate_limit(user_public_id: str, redis: Redis) -> None:
+async def check_rate_limit(user_public_id: str, redis: Redis, tier: str = "free") -> None:
+    if tier == "pro":
+        return
     logger = get_logger(__name__)
     key = f"rate_limit:{user_public_id}"
     try:

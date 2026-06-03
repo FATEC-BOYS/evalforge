@@ -20,3 +20,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 asyncpg
 aiosqlite
+stripe
