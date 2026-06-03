@@ -32,3 +32,47 @@ class UserRepository:
                 select(UserEntity).where(UserEntity.public_id == public_id)
             )
             return result.scalar_one_or_none()
+
+    async def update_tier(self, public_id: str, tier: str) -> UserEntity:
+        async with get_writer_session() as session:
+            result = await session.execute(
+                select(UserEntity).where(UserEntity.public_id == public_id)
+            )
+            user = result.scalar_one_or_none()
+            if user is None:
+                raise ValidationException(
+                    message="User not found",
+                    context={"public_id": public_id},
+                )
+            user.tier = tier
+            await session.flush()
+            return user
+
+    async def update_stripe_ids(
+        self,
+        public_id: str,
+        stripe_customer_id: str,
+        stripe_subscription_id: str | None,
+    ) -> UserEntity:
+        async with get_writer_session() as session:
+            result = await session.execute(
+                select(UserEntity).where(UserEntity.public_id == public_id)
+            )
+            user = result.scalar_one_or_none()
+            if user is None:
+                raise ValidationException(
+                    message="User not found",
+                    context={"public_id": public_id},
+                )
+            user.stripe_customer_id = stripe_customer_id
+            if stripe_subscription_id is not None:
+                user.stripe_subscription_id = stripe_subscription_id
+            await session.flush()
+            return user
+
+    async def find_by_stripe_customer_id(self, stripe_customer_id: str) -> UserEntity | None:
+        async with get_reader_session() as session:
+            result = await session.execute(
+                select(UserEntity).where(UserEntity.stripe_customer_id == stripe_customer_id)
+            )
+            return result.scalar_one_or_none()

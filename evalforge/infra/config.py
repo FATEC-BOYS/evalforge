@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 60
 
+    STRIPE_SECRET_KEY: str | None = None
+    STRIPE_WEBHOOK_SECRET: str | None = None
+    STRIPE_PRO_PRICE_ID: str | None = None
+
+    @field_validator("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_PRICE_ID")
+    @classmethod
+    def stripe_key_non_empty_if_set(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("Stripe config fields must not be empty when provided")
+        return v
+
     @field_validator(
         "ANTHROPIC_API_KEY",
         "LANGSMITH_API_KEY",

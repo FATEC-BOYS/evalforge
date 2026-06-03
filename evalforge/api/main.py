@@ -18,6 +18,7 @@ from api.dependencies import (
 )
 from api.rate_limit import check_rate_limit
 from auth.router import router as auth_router
+from billing.router import router as billing_router
 from core.orchestrator import OrchestratorGraph
 from core.schemas import EvalRequest, EvalResponse
 from db.repositories.audit_log_repository import AuditLogRepository
@@ -54,6 +55,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(billing_router)
 
 
 @app.exception_handler(RateLimitException)
@@ -108,7 +110,7 @@ async def evaluate(
         model=request.model,
     )
 
-    await check_rate_limit(current_user.public_id, redis)
+    await check_rate_limit(current_user.public_id, redis, tier=current_user.tier)
 
     evaluation_id = str(uuid.uuid4())
 

@@ -51,6 +51,7 @@ async def get_current_user(
         email=user.email,
         is_active=user.is_active,
         is_admin=user.is_admin,
+        tier=user.tier,
     )
 
 
