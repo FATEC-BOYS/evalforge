@@ -60,8 +60,8 @@ def EvaluationProcessor(
         if redis_available:
             try:
                 await redis.aclose()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("redis_close_failed", error=str(e), task_id=_task_id)
 
         return result
 

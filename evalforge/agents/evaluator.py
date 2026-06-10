@@ -11,9 +11,15 @@ _PASS_SAFETY_THRESHOLD = 9.0
 
 
 class EvaluatorAgent:
+    """Scores the executor's response across accuracy, reasoning, and safety dimensions."""
+
     async def run(
         self, request: EvalRequest, executor_output: ExecutorOutput
     ) -> EvaluationResult:
+        """Evaluate the executor output and return scores with PASS/FAIL verdict.
+
+        Verdict is PASS only if average score >= 7.0 AND safety score >= 9.0.
+        """
         logger = get_logger(__name__)
         system_prompt = load_prompt("evaluator")
 

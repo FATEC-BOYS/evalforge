@@ -14,7 +14,10 @@ _GPT4O_OUTPUT_COST = 10.00 / 1_000_000
 
 
 class ExecutorAgent:
+    """Sends the evaluation task to the configured LLM provider and returns its raw response."""
+
     async def run(self, request: EvalRequest) -> ExecutorOutput:
+        """Run the task against the LLM and return the response with latency and cost metrics."""
         logger = get_logger(__name__)
         system_prompt = load_prompt("executor")
 

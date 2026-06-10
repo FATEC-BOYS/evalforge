@@ -14,6 +14,8 @@ _SECURITY_MIN_SCORE = 5.0
 
 
 class EvalState(TypedDict):
+    """Shared state passed between LangGraph nodes throughout the evaluation pipeline."""
+
     request: EvalRequest
     security_result: DimensionScore | None
     executor_output: ExecutorOutput | None
@@ -102,11 +104,14 @@ def _build_graph():
 
 
 class OrchestratorGraph:
+    """LangGraph pipeline: security_check → execute → evaluate → persist → END."""
+
     def __init__(self) -> None:
         self.graph = _build_graph()
         self.logger = get_logger(__name__)
 
     async def run(self, request: EvalRequest) -> EvalResponse:
+        """Execute the full evaluation pipeline and return the scored response."""
         self.logger.info("orchestrator_started", task=request.task, model=request.model)
 
         initial_state = EvalState(
