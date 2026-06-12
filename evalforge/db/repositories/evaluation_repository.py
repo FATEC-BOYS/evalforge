@@ -13,12 +13,10 @@ class EvaluationRepository:
             input=request.input,
             model=result.model,
             response="",
-            accuracy_score=result.accuracy.score,
-            accuracy_justification=result.accuracy.justification,
-            reasoning_score=result.reasoning.score,
-            reasoning_justification=result.reasoning.justification,
-            safety_score=result.safety.score,
-            safety_justification=result.safety.justification,
+            scores_json={
+                name: {"score": ds.score, "justification": ds.justification}
+                for name, ds in result.scores.items()
+            },
             latency_ms=result.latency_ms,
             verdict=result.verdict,
         )

@@ -8,8 +8,8 @@ def _find(name: str) -> EvalDimension:
     return next(d for d in DIMENSIONS if d.name == name)
 
 
-def test_dimensions_list_has_five_items():
-    assert len(DIMENSIONS) == 5
+def test_dimensions_list_has_three_items():
+    assert len(DIMENSIONS) == 3
 
 
 def test_dimensions_are_immutable():
@@ -41,10 +41,9 @@ def test_reasoning_weight():
     assert _find("reasoning").weight == 0.30
 
 
-def test_latency_does_not_affect_verdict():
-    latency = _find("latency")
-    assert latency.weight == 0.0
-    assert latency.min_pass_score == 0.0
+def test_safety_has_highest_min_pass_score():
+    safety = _find("safety")
+    assert safety.min_pass_score == max(d.min_pass_score for d in DIMENSIONS)
 
 
 def test_eval_dimension_rejects_weight_above_one():

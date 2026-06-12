@@ -8,12 +8,7 @@ _REQUIRED_COLUMNS = [
     "input",
     "model",
     "response",
-    "accuracy_score",
-    "accuracy_justification",
-    "reasoning_score",
-    "reasoning_justification",
-    "safety_score",
-    "safety_justification",
+    "scores_json",
     "latency_ms",
     "verdict",
 ]

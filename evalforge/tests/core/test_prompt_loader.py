@@ -15,7 +15,8 @@ def test_loads_evaluator_prompt():
     content = load_prompt("evaluator")
     assert isinstance(content, str)
     assert len(content) > 0
-    assert "accuracy" in content
+    assert "<<<DIMENSIONS_SECTION>>>" in content
+    assert "<<<OUTPUT_SCHEMA>>>" in content
 
 
 def test_raises_eval_exception_on_missing_prompt():

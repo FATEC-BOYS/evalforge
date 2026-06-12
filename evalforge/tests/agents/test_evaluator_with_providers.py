@@ -60,4 +60,4 @@ async def test_evaluator_extracts_text_from_provider_output(sample_eval_request,
         result = await EvaluatorAgent().run(sample_eval_request, sample_executor_output)
 
     assert isinstance(result, EvaluationResult)
-    assert 0 <= result.accuracy.score <= 10
+    assert 0 <= result.scores["accuracy"].score <= 10
