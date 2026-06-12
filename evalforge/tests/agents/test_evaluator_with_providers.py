@@ -36,6 +36,8 @@ def sample_executor_output():
 
 @pytest.mark.asyncio
 async def test_evaluator_uses_provider_factory(sample_eval_request, sample_executor_output):
+    from infra.config import settings
+
     mock_provider = AsyncMock()
     mock_provider.complete = AsyncMock(
         return_value=ProviderOutput(text=_make_eval_json(), input_tokens=80, output_tokens=120)
@@ -44,7 +46,7 @@ async def test_evaluator_uses_provider_factory(sample_eval_request, sample_execu
     with patch("agents.evaluator.ProviderFactory.get_provider", return_value=mock_provider) as mock_factory:
         result = await EvaluatorAgent().run(sample_eval_request, sample_executor_output)
 
-    mock_factory.assert_called_once_with(sample_eval_request.model)
+    mock_factory.assert_called_once_with(settings.EVALUATOR_MODEL)
     mock_provider.complete.assert_called_once()
     assert isinstance(result, EvaluationResult)
 

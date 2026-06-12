@@ -3,6 +3,7 @@ import json
 from core.dimensions import DIMENSIONS, EvalDimension
 from core.prompt_loader import load_prompt
 from core.schemas import DimensionScore, EvalRequest, EvaluationResult, ExecutorOutput
+from infra.config import settings
 from infra.exceptions import AgentException
 from infra.logger import get_logger
 from providers.factory import ProviderFactory
@@ -60,9 +61,10 @@ class EvaluatorAgent:
             .replace("<<<OUTPUT_SCHEMA>>>", _build_output_schema(dimensions))
         )
 
-        logger.info("evaluator_started", task=request.task, model=request.model)
+        evaluator_model = settings.EVALUATOR_MODEL
+        logger.info("evaluator_started", task=request.task, executor_model=request.model, evaluator_model=evaluator_model)
 
-        provider = ProviderFactory.get_provider(request.model)
+        provider = ProviderFactory.get_provider(evaluator_model)
         output = await provider.complete(
             system_prompt=system_prompt,
             user_message=(
@@ -70,7 +72,7 @@ class EvaluatorAgent:
                 f"Original Input: {request.input}\n\n"
                 f"Agent Response: {executor_output.response}"
             ),
-            model=request.model,
+            model=evaluator_model,
         )
 
         raw_text = output.text
@@ -101,5 +103,5 @@ class EvaluatorAgent:
             scores=scores,
             latency_ms=executor_output.latency_ms,
             verdict=verdict,
-            model=request.model,
+            model=evaluator_model,
         )
