@@ -10,6 +10,7 @@ class EvalRequest(BaseModel):
     input: str
     model: str = "claude-sonnet-4-20250514"
     dimensions: list[EvalDimension] | None = None
+    system_prompt: str | None = None
 
     @field_validator("task", "input", "model")
     @classmethod
