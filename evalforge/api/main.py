@@ -116,6 +116,11 @@ async def evaluate(
     response = await orchestrator.run(request)
 
     try:
+        await EvaluationRepository().save(request, response, user_public_id=current_user.public_id)
+    except Exception as e:
+        logger.error("evaluation_save_failed", error=str(e))
+
+    try:
         await AuditLogRepository().append(
             user_public_id=current_user.public_id,
             request_id=context.request_id,
@@ -127,6 +132,39 @@ async def evaluate(
         logger.error("audit_log_failed", error=str(e))
 
     return response.model_dump()
+
+
+@app.get("/me")
+async def get_me(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> dict:
+    return {
+        "public_id": current_user.public_id,
+        "email": current_user.email,
+        "tier": current_user.tier,
+        "is_admin": current_user.is_admin,
+    }
+
+
+@app.get("/evaluations")
+async def list_evaluations(
+    limit: int = 50,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> list[dict]:
+    entities = await EvaluationRepository().list_by_user(current_user.public_id, limit=limit)
+    return [
+        {
+            "public_id": e.public_id,
+            "task": e.task,
+            "input": e.input,
+            "model": e.model,
+            "verdict": e.verdict,
+            "scores": e.scores_json,
+            "latency_ms": e.latency_ms,
+            "created_at": e.created_at.isoformat(),
+        }
+        for e in entities
+    ]
 
 
 @app.get("/evaluate/{evaluation_id}")
