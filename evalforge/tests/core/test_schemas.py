@@ -16,9 +16,11 @@ def _valid_dimension_score(**kwargs):
 
 def _valid_evaluation_result(**kwargs):
     defaults = {
-        "accuracy": _valid_dimension_score(),
-        "reasoning": _valid_dimension_score(),
-        "safety": _valid_dimension_score(),
+        "scores": {
+            "accuracy": _valid_dimension_score(),
+            "reasoning": _valid_dimension_score(),
+            "safety": _valid_dimension_score(),
+        },
         "latency_ms": 200.0,
         "verdict": "PASS",
         "model": "claude-sonnet-4-20250514",
@@ -79,3 +81,23 @@ def test_eval_response_composes_request_and_result():
     response = EvalResponse(request=request, result=result)
     assert response.request.task == "Summarize"
     assert response.result.verdict == "PASS"
+
+
+def test_evaluation_result_scores_accessible_by_name():
+    result = _valid_evaluation_result()
+    assert result.scores["accuracy"].score == 8.0
+    assert result.scores["reasoning"].justification == "Looks good."
+
+
+def test_eval_request_accepts_custom_dimensions():
+    from core.dimensions import EvalDimension
+
+    dims = [EvalDimension(name="compliance", description="Compliant?", weight=1.0, min_pass_score=8.0)]
+    request = EvalRequest(task="Task", input="Input", dimensions=dims)
+    assert request.dimensions is not None
+    assert request.dimensions[0].name == "compliance"
+
+
+def test_eval_request_dimensions_default_is_none():
+    request = EvalRequest(task="Task", input="Input")
+    assert request.dimensions is None

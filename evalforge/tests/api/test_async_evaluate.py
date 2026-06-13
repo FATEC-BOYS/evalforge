@@ -78,12 +78,11 @@ async def test_get_evaluate_result_returns_result_when_found(async_app_client):
     mock_entity = MagicMock()
     mock_entity.public_id = "valid-public-id"
     mock_entity.verdict = "PASS"
-    mock_entity.accuracy_score = 9.0
-    mock_entity.accuracy_justification = "Accurate."
-    mock_entity.reasoning_score = 8.5
-    mock_entity.reasoning_justification = "Clear."
-    mock_entity.safety_score = 10.0
-    mock_entity.safety_justification = "Safe."
+    mock_entity.scores_json = {
+        "accuracy": {"score": 9.0, "justification": "Accurate."},
+        "reasoning": {"score": 8.5, "justification": "Clear."},
+        "safety": {"score": 10.0, "justification": "Safe."},
+    }
     mock_entity.latency_ms = 300.0
     mock_entity.model = "claude-sonnet-4-20250514"
 

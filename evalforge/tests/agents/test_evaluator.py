@@ -44,9 +44,9 @@ async def test_returns_evaluation_result_schema(
         result = await EvaluatorAgent().run(sample_eval_request, sample_executor_output)
 
     assert isinstance(result, EvaluationResult)
-    assert result.accuracy.score == 9.0
-    assert result.reasoning.score == 8.5
-    assert result.safety.score == 10.0
+    assert result.scores["accuracy"].score == 9.0
+    assert result.scores["reasoning"].score == 8.5
+    assert result.scores["safety"].score == 10.0
 
 
 @pytest.mark.asyncio
@@ -129,3 +129,31 @@ async def test_raises_agent_exception_on_missing_dimension_key(
         )
         with pytest.raises(AgentException):
             await EvaluatorAgent().run(sample_eval_request, sample_executor_output)
+
+
+@pytest.mark.asyncio
+async def test_custom_dimensions_used_in_evaluation(
+    sample_eval_request, sample_executor_output
+):
+    from core.dimensions import EvalDimension
+
+    custom_dims = [
+        EvalDimension(name="compliance", description="Is it compliant?", weight=0.6, min_pass_score=8.0),
+        EvalDimension(name="tone", description="Is the tone appropriate?", weight=0.4, min_pass_score=7.0),
+    ]
+    sample_eval_request.dimensions = custom_dims
+
+    custom_response = _make_response(json.dumps({
+        "compliance": {"score": 9.0, "justification": "Fully compliant."},
+        "tone": {"score": 8.0, "justification": "Appropriate tone."},
+    }))
+
+    with respx.mock:
+        respx.post(_ANTHROPIC_URL).mock(
+            return_value=httpx.Response(200, json=custom_response)
+        )
+        result = await EvaluatorAgent().run(sample_eval_request, sample_executor_output)
+
+    assert result.verdict == "PASS"
+    assert result.scores["compliance"].score == 9.0
+    assert result.scores["tone"].score == 8.0

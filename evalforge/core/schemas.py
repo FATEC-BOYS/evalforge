@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, field_validator
+
+from core.dimensions import EvalDimension
 
 
 class EvalRequest(BaseModel):
     task: str
     input: str
     model: str = "claude-sonnet-4-20250514"
+    dimensions: list[EvalDimension] | None = None
+    system_prompt: str | None = None
 
     @field_validator("task", "input", "model")
     @classmethod
@@ -57,10 +63,7 @@ _VALID_VERDICTS = {"PASS", "FAIL"}
 
 
 class EvaluationResult(BaseModel):
-    accuracy: DimensionScore
-    reasoning: DimensionScore
-    safety: DimensionScore
-    security: DimensionScore | None = None
+    scores: dict[str, DimensionScore]
     latency_ms: float
     verdict: str
     model: str

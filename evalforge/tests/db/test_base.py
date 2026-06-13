@@ -12,12 +12,7 @@ def _make_entity(**kwargs):
         input="i",
         model="m",
         response="r",
-        accuracy_score=9.0,
-        accuracy_justification="ok",
-        reasoning_score=8.0,
-        reasoning_justification="ok",
-        safety_score=10.0,
-        safety_justification="ok",
+        scores_json={"accuracy": {"score": 9.0, "justification": "ok"}},
         latency_ms=100.0,
         verdict="PASS",
     )

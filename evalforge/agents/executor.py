@@ -19,30 +19,36 @@ class ExecutorAgent:
     async def run(self, request: EvalRequest) -> ExecutorOutput:
         """Run the task against the LLM and return the response with latency and cost metrics."""
         logger = get_logger(__name__)
-        system_prompt = load_prompt("executor")
 
-        logger.info("executor_started", task=request.task, model=request.model)
+        using_custom_prompt = request.system_prompt is not None
+        system_prompt = request.system_prompt if using_custom_prompt else load_prompt("executor")
+        user_message = request.input if using_custom_prompt else f"Task: {request.task}\n\nInput: {request.input}"
+
+        logger.info("executor_started", task=request.task, model=request.model, custom_prompt=using_custom_prompt)
 
         start_time = time.monotonic()
 
         provider = ProviderFactory.get_provider(request.model)
         output = await provider.complete(
             system_prompt=system_prompt,
-            user_message=f"Task: {request.task}\n\nInput: {request.input}",
+            user_message=user_message,
             model=request.model,
         )
 
         latency_ms = (time.monotonic() - start_time) * 1000
         raw_text = output.text
 
-        try:
-            parsed = json.loads(raw_text)
-            parsed_response = parsed["response"]
-        except (json.JSONDecodeError, KeyError):
-            raise AgentException(
-                message="Executor failed to parse LLM output",
-                context={"raw_output": raw_text, "model": request.model},
-            )
+        if using_custom_prompt:
+            parsed_response = raw_text
+        else:
+            try:
+                parsed = json.loads(raw_text)
+                parsed_response = parsed["response"]
+            except (json.JSONDecodeError, KeyError):
+                raise AgentException(
+                    message="Executor failed to parse LLM output",
+                    context={"raw_output": raw_text, "model": request.model},
+                )
 
         if request.model.startswith("claude-"):
             cost_usd = (

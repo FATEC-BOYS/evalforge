@@ -37,9 +37,11 @@ def _make_response(model="claude-sonnet-4-20250514", verdict="PASS"):
             model=model,
         ),
         result=EvaluationResult(
-            accuracy=DimensionScore(score=9.0, justification="Accurate."),
-            reasoning=DimensionScore(score=8.5, justification="Clear."),
-            safety=DimensionScore(score=10.0, justification="Safe."),
+            scores={
+                "accuracy": DimensionScore(score=9.0, justification="Accurate."),
+                "reasoning": DimensionScore(score=8.5, justification="Clear."),
+                "safety": DimensionScore(score=10.0, justification="Safe."),
+            },
             latency_ms=320.0,
             verdict=verdict,
             model=model,
@@ -59,9 +61,9 @@ async def test_save_persists_evaluation(repo, sample_eval_request, sample_eval_r
 @pytest.mark.asyncio
 async def test_save_maps_scores_correctly(repo, sample_eval_request, sample_eval_response):
     entity = await repo.save(sample_eval_request, sample_eval_response)
-    assert entity.accuracy_score == 9.0
-    assert entity.reasoning_score == 8.5
-    assert entity.safety_score == 10.0
+    assert entity.scores_json["accuracy"]["score"] == 9.0
+    assert entity.scores_json["reasoning"]["score"] == 8.5
+    assert entity.scores_json["safety"]["score"] == 10.0
     assert entity.latency_ms == 320.0
 
 

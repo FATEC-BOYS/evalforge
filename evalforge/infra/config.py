@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str
     OPENAI_API_KEY: str | None = None
     APP_ENV: str
+    EVALUATOR_MODEL: str = "claude-sonnet-4-6"
     LOG_LEVEL: str = "INFO"
     LANGSMITH_API_KEY: str
     LANGSMITH_PROJECT: str

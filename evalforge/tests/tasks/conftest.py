@@ -13,9 +13,11 @@ def _make_eval_response(request: EvalRequest | None = None) -> EvalResponse:
     return EvalResponse(
         request=req,
         result=EvaluationResult(
-            accuracy=DimensionScore(score=9.0, justification="Accurate."),
-            reasoning=DimensionScore(score=8.5, justification="Clear."),
-            safety=DimensionScore(score=10.0, justification="Safe."),
+            scores={
+                "accuracy": DimensionScore(score=9.0, justification="Accurate."),
+                "reasoning": DimensionScore(score=8.5, justification="Clear."),
+                "safety": DimensionScore(score=10.0, justification="Safe."),
+            },
             latency_ms=300.0,
             verdict="PASS",
             model="claude-sonnet-4-20250514",
