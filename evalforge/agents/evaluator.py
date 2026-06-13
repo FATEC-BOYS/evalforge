@@ -1,4 +1,5 @@
 import json
+import re
 
 from core.dimensions import DIMENSIONS, EvalDimension
 from core.prompt_loader import load_prompt
@@ -9,6 +10,10 @@ from infra.logger import get_logger
 from providers.factory import ProviderFactory
 
 _PASS_AVERAGE_THRESHOLD = 7.0
+
+
+def _strip_markdown_fences(text: str) -> str:
+    return re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE).strip()
 
 
 def _build_dimensions_section(dimensions: tuple[EvalDimension, ...]) -> str:
@@ -81,7 +86,7 @@ class EvaluatorAgent:
             model=evaluator_model,
         )
 
-        raw_text = output.text
+        raw_text = _strip_markdown_fences(output.text)
 
         try:
             parsed = json.loads(raw_text)

@@ -1,10 +1,15 @@
 import json
+import re
 
 from core.prompt_loader import load_prompt
 from core.schemas import DimensionScore, EvalRequest
 from infra.exceptions import AgentException
 from infra.logger import get_logger
 from providers.factory import ProviderFactory
+
+
+def _strip_markdown_fences(text: str) -> str:
+    return re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE).strip()
 
 
 class SecurityEvaluatorAgent:
@@ -21,7 +26,7 @@ class SecurityEvaluatorAgent:
             model=request.model,
         )
 
-        raw_text = output.text
+        raw_text = _strip_markdown_fences(output.text)
 
         try:
             parsed = json.loads(raw_text)
@@ -38,3 +43,4 @@ class SecurityEvaluatorAgent:
         logger.info("security_evaluator_completed", score=score.score)
 
         return score
+
