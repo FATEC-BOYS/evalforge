@@ -1,4 +1,5 @@
 import json
+import re
 import time
 
 from core.prompt_loader import load_prompt
@@ -11,6 +12,31 @@ _CLAUDE_INPUT_COST = 3.00 / 1_000_000
 _CLAUDE_OUTPUT_COST = 15.00 / 1_000_000
 _GPT4O_INPUT_COST = 2.50 / 1_000_000
 _GPT4O_OUTPUT_COST = 10.00 / 1_000_000
+
+
+def _parse_executor_output(raw: str) -> str:
+    """Extract the 'response' field from the LLM JSON output, tolerating common formatting issues."""
+    clean = raw.strip()
+
+    # Strip markdown code fences
+    if clean.startswith("```"):
+        clean = clean.split("\n", 1)[-1]
+        clean = clean.rsplit("```", 1)[0].strip()
+
+    # Try strict parse first
+    try:
+        return json.loads(clean)["response"]
+    except json.JSONDecodeError:
+        pass
+
+    # Escape unescaped literal newlines inside JSON string values and retry
+    fixed = re.sub(
+        r'"((?:[^"\\]|\\.)*)"',
+        lambda m: '"' + m.group(1).replace("\n", "\\n").replace("\r", "\\r") + '"',
+        clean,
+        flags=re.DOTALL,
+    )
+    return json.loads(fixed)["response"]
 
 
 class ExecutorAgent:
@@ -42,13 +68,8 @@ class ExecutorAgent:
             parsed_response = raw_text
         else:
             try:
-                clean = raw_text.strip()
-                if clean.startswith("```"):
-                    clean = clean.split("\n", 1)[-1]
-                    clean = clean.rsplit("```", 1)[0].strip()
-                parsed = json.loads(clean)
-                parsed_response = parsed["response"]
-            except (json.JSONDecodeError, KeyError):
+                parsed_response = _parse_executor_output(raw_text)
+            except (json.JSONDecodeError, KeyError, ValueError):
                 raise AgentException(
                     message="Executor failed to parse LLM output",
                     context={"raw_output": raw_text, "model": request.model},
