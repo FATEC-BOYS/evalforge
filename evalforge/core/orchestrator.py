@@ -30,11 +30,11 @@ async def security_check_node(state: EvalState) -> dict:
         if result.score < _SECURITY_MIN_SCORE:
             return {
                 "security_result": result,
-                "handle_error": f"Input rejected: security score {result.score} below threshold {_SECURITY_MIN_SCORE}",
+                "error": f"Input rejected: security score {result.score} below threshold {_SECURITY_MIN_SCORE}",
             }
         return {"security_result": result}
     except Exception as e:
-        return {"handle_error": str(e)}
+        return {"error": str(e)}
 
 
 async def execute_node(state: EvalState) -> dict:
@@ -43,7 +43,7 @@ async def execute_node(state: EvalState) -> dict:
         result = await agent.run(state["request"])
         return {"executor_output": result}
     except Exception as e:
-        return {"handle_error": str(e)}
+        return {"error": str(e)}
 
 
 async def evaluate_node(state: EvalState) -> dict:
@@ -52,23 +52,23 @@ async def evaluate_node(state: EvalState) -> dict:
         result = await agent.run(state["request"], state["executor_output"])
         return {"evaluation_result": result}
     except Exception as e:
-        return {"handle_error": str(e)}
+        return {"error": str(e)}
 
 
 async def handle_error_node(state: EvalState) -> dict:
     logger = get_logger(__name__)
-    logger.error("pipeline_failed", error=state["handle_error"])
+    logger.error("pipeline_failed", error=state["error"])
     return {}
 
 
 def should_execute(state: EvalState) -> str:
-    if state["handle_error"] is not None:
+    if state["error"] is not None:
         return "handle_error"
     return "execute"
 
 
 def should_continue(state: EvalState) -> str:
-    if state["handle_error"] is not None:
+    if state["error"] is not None:
         return "handle_error"
     return "evaluate"
 
@@ -79,7 +79,7 @@ def _build_graph():
     graph.add_node("security_check", security_check_node)
     graph.add_node("execute", execute_node)
     graph.add_node("evaluate", evaluate_node)
-    graph.add_node("handle_error", error_node)
+    graph.add_node("handle_error", handle_error_node)
 
     graph.set_entry_point("security_check")
 
@@ -124,11 +124,11 @@ class OrchestratorGraph:
 
         final_state = await self.graph.ainvoke(initial_state)
 
-        if final_state["handle_error"] is not None:
+        if final_state["error"] is not None:
             raise OrchestratorException(
                 message="Pipeline failed during execution",
                 context={
-                    "handle_error": final_state["handle_error"],
+                    "error": final_state["error"],
                     "task": request.task,
                     "model": request.model,
                 },
