@@ -1,4 +1,6 @@
 import anthropic
+from langsmith import traceable
+from langsmith.wrappers import wrap_anthropic
 
 from infra.config import settings
 from infra.exceptions import ProviderException
@@ -6,6 +8,7 @@ from providers.base import BaseProvider, ProviderOutput
 
 
 class AnthropicProvider(BaseProvider):
+    @traceable(run_type="llm", name="anthropic_complete")
     async def complete(
         self,
         system_prompt: str,
@@ -14,7 +17,7 @@ class AnthropicProvider(BaseProvider):
         max_tokens: int = 1024,
     ) -> ProviderOutput:
         try:
-            client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+            client = wrap_anthropic(anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY))
             response = await client.messages.create(
                 model=model,
                 max_tokens=max_tokens,

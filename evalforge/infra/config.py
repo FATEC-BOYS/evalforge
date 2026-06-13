@@ -12,8 +12,9 @@ class Settings(BaseSettings):
     APP_ENV: str
     EVALUATOR_MODEL: str = "claude-sonnet-4-6"
     LOG_LEVEL: str = "INFO"
-    LANGSMITH_API_KEY: str
-    LANGSMITH_PROJECT: str
+    LANGSMITH_API_KEY: str | None = None
+    LANGSMITH_PROJECT: str = "evalforge"
+    LANGCHAIN_TRACING_V2: str = "false"
     DATABASE_URL: str
     DATABASE_READER_URL: str
     REDIS_URL: str
@@ -34,8 +35,6 @@ class Settings(BaseSettings):
 
     @field_validator(
         "ANTHROPIC_API_KEY",
-        "LANGSMITH_API_KEY",
-        "LANGSMITH_PROJECT",
         "DATABASE_URL",
         "DATABASE_READER_URL",
         "REDIS_URL",
