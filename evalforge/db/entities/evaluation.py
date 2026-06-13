@@ -1,4 +1,4 @@
-from sqlalchemy import Float, JSON, String, Text
+from sqlalchemy import Float, Index, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import BaseEntity
@@ -6,7 +6,9 @@ from db.base import BaseEntity
 
 class EvaluationEntity(BaseEntity):
     __tablename__ = "evaluations"
+    __table_args__ = (Index("ix_evaluations_user_public_id", "user_public_id"),)
 
+    user_public_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     task: Mapped[str] = mapped_column(Text, nullable=False)
     input: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String, nullable=False)
