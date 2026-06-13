@@ -17,7 +17,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", sa.BINARY(16), primary_key=True, nullable=False),
+        sa.Column("id", sa.LargeBinary(16), primary_key=True, nullable=False),
         sa.Column("public_id", sa.String(36), unique=True, nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
@@ -32,7 +32,7 @@ def upgrade() -> None:
 
     op.create_table(
         "evaluations",
-        sa.Column("id", sa.BINARY(16), primary_key=True, nullable=False),
+        sa.Column("id", sa.LargeBinary(16), primary_key=True, nullable=False),
         sa.Column("public_id", sa.String(36), unique=True, nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),

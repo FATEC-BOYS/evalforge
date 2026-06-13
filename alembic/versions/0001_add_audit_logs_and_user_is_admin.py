@@ -27,7 +27,7 @@ def upgrade() -> None:
 
     op.create_table(
         "audit_logs",
-        sa.Column("id", sa.BINARY(16), primary_key=True, nullable=False),
+        sa.Column("id", sa.LargeBinary(16), primary_key=True, nullable=False),
         sa.Column("public_id", sa.String(36), unique=True, nullable=False),
         sa.Column(
             "created_at",
