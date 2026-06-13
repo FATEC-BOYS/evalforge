@@ -146,6 +146,29 @@ async def get_me(
     }
 
 
+@app.get("/me/usage")
+async def get_usage(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
+) -> dict:
+    from api.rate_limit import RATE_LIMIT, WINDOW_SECONDS
+    key = f"rate_limit:{current_user.public_id}"
+    try:
+        raw = await redis.get(key)
+        ttl = await redis.ttl(key)
+        used = int(raw) if raw else 0
+    except Exception:
+        used = 0
+        ttl = WINDOW_SECONDS
+    return {
+        "used": used,
+        "limit": RATE_LIMIT,
+        "remaining": max(0, RATE_LIMIT - used),
+        "resets_in": max(0, ttl),
+        "tier": current_user.tier,
+    }
+
+
 @app.get("/evaluations")
 async def list_evaluations(
     limit: int = 50,
@@ -158,6 +181,7 @@ async def list_evaluations(
             "task": e.task,
             "input": e.input,
             "model": e.model,
+            "response": e.response,
             "verdict": e.verdict,
             "scores": e.scores_json,
             "latency_ms": e.latency_ms,
