@@ -42,7 +42,11 @@ class ExecutorAgent:
             parsed_response = raw_text
         else:
             try:
-                parsed = json.loads(raw_text)
+                clean = raw_text.strip()
+                if clean.startswith("```"):
+                    clean = clean.split("\n", 1)[-1]
+                    clean = clean.rsplit("```", 1)[0].strip()
+                parsed = json.loads(clean)
                 parsed_response = parsed["response"]
             except (json.JSONDecodeError, KeyError):
                 raise AgentException(
