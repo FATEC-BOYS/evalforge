@@ -100,6 +100,7 @@ async def evaluate(
     context: RequestContext = Depends(get_request_context),
     current_user: AuthenticatedUser = Depends(get_current_user),
     redis: Redis = Depends(get_redis),
+    orchestrator: OrchestratorGraph = Depends(get_orchestrator),
 ) -> dict:
     logger = get_logger(__name__)
     logger.info(
@@ -112,28 +113,20 @@ async def evaluate(
 
     await check_rate_limit(current_user.public_id, redis, tier=current_user.tier)
 
-    evaluation_id = str(uuid.uuid4())
-
-    EvaluationProcessor.delay(request.model_dump(), current_user.public_id, evaluation_id)
-
-    logger.info(
-        "evaluate_task_dispatched",
-        evaluation_id=evaluation_id,
-        user=current_user.public_id,
-    )
+    response = await orchestrator.run(request)
 
     try:
         await AuditLogRepository().append(
             user_public_id=current_user.public_id,
             request_id=context.request_id,
             action="evaluate",
-            result="processing",
+            result=response.result.verdict,
             model=request.model,
         )
     except Exception as e:
         logger.error("audit_log_failed", error=str(e))
 
-    return {"evaluation_id": evaluation_id, "status": "processing"}
+    return response.model_dump()
 
 
 @app.get("/evaluate/{evaluation_id}")
