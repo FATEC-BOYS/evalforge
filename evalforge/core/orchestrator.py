@@ -154,6 +154,7 @@ class OrchestratorGraph:
         response = EvalResponse(
             request=request,
             result=evaluation_result,
+            output=final_state["executor_output"].response if final_state.get("executor_output") else None,
         )
 
         try:

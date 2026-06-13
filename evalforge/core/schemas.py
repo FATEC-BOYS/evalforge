@@ -93,3 +93,4 @@ class EvaluationResult(BaseModel):
 class EvalResponse(BaseModel):
     request: EvalRequest
     result: EvaluationResult
+    output: str | None = None
