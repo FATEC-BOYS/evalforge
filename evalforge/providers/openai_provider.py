@@ -1,4 +1,6 @@
 import openai
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
 
 from infra.config import settings
 from infra.exceptions import ProviderException
@@ -6,6 +8,7 @@ from providers.base import BaseProvider, ProviderOutput
 
 
 class OpenAIProvider(BaseProvider):
+    @traceable(run_type="llm", name="openai_complete")
     async def complete(
         self,
         system_prompt: str,
@@ -21,7 +24,7 @@ class OpenAIProvider(BaseProvider):
             )
 
         try:
-            client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+            client = wrap_openai(openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
             response = await client.chat.completions.create(
                 model=model,
                 max_tokens=max_tokens,

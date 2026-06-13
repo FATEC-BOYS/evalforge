@@ -29,11 +29,21 @@ from infra.logger import configure_logging, get_logger
 from tasks.evaluation_processor import EvaluationProcessor
 
 
+def _configure_langsmith() -> None:
+    """Set LangChain env vars from settings so LangGraph traces reach LangSmith."""
+    import os
+    if settings.LANGSMITH_API_KEY:
+        os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
+        os.environ.setdefault("LANGCHAIN_API_KEY", settings.LANGSMITH_API_KEY)
+        os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGSMITH_PROJECT)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _configure_langsmith()
     configure_logging(app_env=settings.APP_ENV)
     logger = get_logger(__name__)
-    logger.info("evalforge_started", env=settings.APP_ENV)
+    logger.info("evalforge_started", env=settings.APP_ENV, langsmith_enabled=bool(settings.LANGSMITH_API_KEY))
     yield
     logger.info("evalforge_stopped")
 
